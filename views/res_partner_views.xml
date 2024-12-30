@@ -1,0 +1,25 @@
+<odoo>
+    <record id="view_res_partner_form_inherit_portal" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.portal</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//group[.//field[@name='email']]" position="inside">
+                <group string="Portal Access">
+                    <field name="x_grant_portal_access" 
+                           force_save="1"
+                        />
+                </group>
+                <group string="Send Agreement">
+                    <div class="o_row">
+                        <field name="x_signature_template_id" 
+                               options="{'no_create': True, 'no_create_edit': True}"
+                               placeholder="Select Agreement"/>
+                        <button name="action_send_agreement" type="object" string="Send" class="oe_highlight"
+                            modifiers="{'invisible': [('x_signature_template_id', '=', False)]}"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

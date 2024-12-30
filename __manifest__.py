@@ -5,9 +5,9 @@
     'summary': 'Automatically grant portal access to contacts.',
     'author': 'Muhammad Saad Mateen',
     'website': 'https://dtechocean.com',
-    'depends': ['base', 'contacts', 'portal'],
+    'depends': ['base', 'contacts', 'portal', 'sign'],
     'data': [
-        'views/res_partner_view.xml',
+        'views/res_partner_views.xml',
     ],
     'installable': True,
     'application': False,
