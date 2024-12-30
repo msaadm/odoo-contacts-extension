@@ -1,0 +1,15 @@
+<odoo>
+    <record id="view_res_partner_form_inherit_portal" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.portal</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Portal Access">
+                    <field name="x_grant_portal_access" 
+                           force_save="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>
