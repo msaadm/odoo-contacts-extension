@@ -1,8 +1,8 @@
 {
-    'name': 'Grant Portal Access',
+    'name': 'Dtech - Contacts Extension',
     'version': '1.0',
     'category': 'Contacts',
-    'summary': 'Automatically grant portal access to contacts.',
+    'summary': 'Add Extensions to the Contacts Module to add Grant Access portal and Send Agreement from Main edit screen.',
     'author': 'Muhammad Saad Mateen',
     'website': 'https://dtechocean.com',
     'depends': ['base', 'contacts', 'portal', 'sign'],
