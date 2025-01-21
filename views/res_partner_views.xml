@@ -5,18 +5,38 @@
         <field name="inherit_id" ref="base.view_partner_form" />
         <field name="arch" type="xml">
             <xpath expr="//group[.//field[@name='email']]" position="inside">
-                <group string="Portal Access">
-                    <field name="x_grant_portal_access" 
-                           force_save="1"
-                        />
+                <group string="Portal Access" name="portal_access">
+                    <div class="o_row">
+                        <field name="has_portal_access" invisible="1"/>
+                        <button name="toggle_portal_access" 
+                                type="object" 
+                                string="Grant Portal Access"
+                                class="oe_highlight"
+                                invisible="has_portal_access"
+                                help="Click to grant portal access"/>
+                        <field name="activation_link" 
+                               readonly="1" 
+                               widget="CopyClipboardChar" 
+                               invisible="not has_portal_access"
+                               class="oe_inline"/>
+                        <button name="toggle_portal_access" 
+                                type="object"
+                                string="Revoke Portal Access"
+                                class="btn btn-secondary"
+                                invisible="not has_portal_access"
+                                help="Click to revoke portal access"/>
+                    </div>
                 </group>
                 <group string="Send Agreement">
                     <div class="o_row">
                         <field name="x_signature_template_id" 
                                options="{'no_create': True, 'no_create_edit': True}"
                                placeholder="Select Agreement"/>
-                        <button name="action_send_agreement" type="object" string="Send" class="oe_highlight"
-                            modifiers="{'invisible': [('x_signature_template_id', '=', False)]}"/>
+                        <button name="action_send_agreement" 
+                                type="object" 
+                                string="Send" 
+                                class="oe_highlight"
+                                invisible="not x_signature_template_id"/>
                     </div>
                 </group>
             </xpath>

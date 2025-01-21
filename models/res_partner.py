@@ -1,14 +1,11 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class ResPartner(models.Model):
     _inherit = 'res.partner'
-
-    x_grant_portal_access = fields.Boolean(
-        string='Grant Portal Access',
-        default=True,
-        tracking=True
-    )
 
     x_signature_template_id = fields.Many2one(
         'sign.template',
@@ -16,37 +13,88 @@ class ResPartner(models.Model):
         tracking=True
     )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for record in records:
-            if record.x_grant_portal_access:
-                if record.email and record.name:
-                    wizard = self.env['portal.wizard'].create({
-                        'user_ids': [(0, 0, {
-                            'partner_id': record.id,
-                            'email': record.email,
-                        })]
-                    })
-                    wizard.user_ids.action_grant_access()
-                    record.x_grant_portal_access = False
-        return records
-
-    def write(self, vals):
-        result = super().write(vals)
-        if 'x_grant_portal_access' in vals and vals.get('x_grant_portal_access'):
-            for record in self:
-                if record.email and record.name:
-                    wizard = self.env['portal.wizard'].create({
-                        'user_ids': [(0, 0, {
-                            'partner_id': record.id,
-                            'email': record.email,
-                        })]
-                    })
-                    wizard.user_ids.action_grant_access()
-                    record.x_grant_portal_access = False
-        return result
+    has_portal_access = fields.Boolean(
+        string='Has Portal Access',
+        compute='_compute_has_portal_access',
+    )
     
+    activation_link = fields.Char(
+        string='Portal Activation Link',
+        compute='_compute_activation_link',
+    )
+
+    @api.depends('user_ids', 'user_ids.active')
+    def _compute_has_portal_access(self):
+        for partner in self:
+            # Check if partner has portal user
+            portal_user = self.env['res.users'].sudo().search_count([
+                ('partner_id', '=', partner.id),
+                ('active', '=', True)
+            ])
+            if portal_user > 0:
+                partner.has_portal_access = True
+            else:
+                partner.has_portal_access = False
+            _logger.info('Computing portal access for partner %s (ID: %s): %s', 
+                        partner.name, partner.id, partner.has_portal_access)
+
+    @api.depends('has_portal_access')
+    def _compute_activation_link(self):
+        for partner in self:
+            if partner.has_portal_access:
+                signup_url = partner.with_context(signup_force_type_in_url='signup')._get_signup_url_for_action()[partner.id]
+                partner.activation_link = signup_url
+            else:
+                partner.activation_link = False
+
+    def toggle_portal_access(self):
+        self.ensure_one()
+        _logger.info('Toggle portal access for partner %s (ID: %s). Current status: %s', 
+                    self.name, self.id, self.has_portal_access)
+        
+        if not self.email:
+            raise ValidationError('Please add an email address before granting portal access.')
+        
+        if not self.name:
+            raise ValidationError('Contact must have a name before granting portal access.')
+
+        if self.has_portal_access:
+            # Find and remove the portal user
+            portal_user = self.env['res.users'].sudo().search([
+                ('partner_id', '=', self.id),
+                ('active', '=', True)
+            ], limit=1)
+            
+            if portal_user:
+                _logger.info('Removing portal user: %s', portal_user.id)
+                portal_user.sudo().unlink()
+        else:
+            # Grant access using portal.wizard
+            wizard = self.env['portal.wizard'].sudo().create({
+                'user_ids': [(0, 0, {
+                    'partner_id': self.id,
+                    'email': self.email,
+                })]
+            })
+            wizard.user_ids.action_grant_access()
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.partner',
+            'res_id': self.id,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'target': 'current',
+            'context': {
+                'notification': {
+                    'type': 'success',
+                    'title': 'Success',
+                    'message': f'Portal access has been {"granted" if self.has_portal_access else "revoked"} for {self.name}',
+                    'sticky': False
+                }
+            }
+        }
+
     def action_send_agreement(self):
         if self.x_signature_template_id and self.email:
             template = self.x_signature_template_id

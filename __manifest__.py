@@ -9,6 +9,7 @@
     'data': [
         'views/res_partner_views.xml',
     ],
+    'post_init_hook': 'post_init_hook',
     'installable': True,
     'application': False,
     'maintainer': 'Muhammad Saad Mateen',
